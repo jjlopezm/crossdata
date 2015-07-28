@@ -20,9 +20,16 @@ import org.apache.spark.sql.crossdata.XDContext
 import org.apache.spark.{SparkContext, SparkConf}
 
 trait DefaultConstants {
+/*
   val Cluster = "Test Cluster"
   val Catalog = "highschool"
   val Table = "students"
+*/
+  val nIterations = 10000
+  val Cluster = "Test Cluster"
+  val Catalog = "report"
+  val Table = "cars"
+
   val CassandraHost = "127.0.0.1"
   val SourceProvider = "com.stratio.crossdata.sql.sources.cassandra"
   // Cassandra provider => org.apache.spark.sql.cassandra

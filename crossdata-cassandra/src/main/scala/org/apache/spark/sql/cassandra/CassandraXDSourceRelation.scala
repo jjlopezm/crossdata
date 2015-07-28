@@ -50,10 +50,10 @@ private[cassandra] class CassandraXDSourceRelation(
   override def buildScan(optimizedLogicalPlan: LogicalPlan): Option[Array[Row]] = {
     logInfo(s"We should process this plan ${optimizedLogicalPlan.toString}")
     optimizedLogicalPlan.children.asInstanceOf match {
-      case Project =>
-      case Filter =>
-      case CassandraRelation=>
-      case Aggregate =>
+      case p: Project =>
+      case f: Filter =>
+      case r: CassandraRelation=>
+      case a: Aggregate =>
       case _ => //throw ExecutionException("Not Allowed query.")
     }
     None
