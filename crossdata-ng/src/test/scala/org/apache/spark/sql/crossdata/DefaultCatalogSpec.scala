@@ -19,24 +19,39 @@ package org.apache.spark.sql.crossdata
 import java.util
 import java.util.UUID
 
+import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.execution.ShowTablesCommand
-import org.scalatest.FunSuite
+import org.apache.spark.{SparkConf, SparkContext}
+import org.junit.runner.RunWith
+import org.scalatest.FlatSpec
+import org.scalatest.junit.JUnitRunner
 
-class DefaultCatalogSuite extends FunSuite {
+@RunWith(classOf[JUnitRunner])
+class DefaultCatalogSpec extends FlatSpec {
 
-   test("Default catalog: Register Table") {
+   "A Defaultcatalog" should "be able to register a table" in {
 
-     val dc: DefaultCatalog = new DefaultCatalog
      val tmpTable: Seq[String] = Seq(UUID.randomUUID.toString)
-     dc.registerTable(tmpTable, new ShowTablesCommand(None))
-     assert(dc.tableExists(tmpTable))
-     dc.unregisterTable(tmpTable)
-     dc.close()
 
+     val sc = new SparkContext(
+       (new SparkConf()).setAppName("Crossdata").setMaster("local[2]"))
+
+     val xdc: XDContext = new XDContext(sc)
+
+     import xdc.implicits._
+
+     val df: DataFrame = sc.parallelize((1 to 5).map(i => new String(s"val_$i"))).toDF()
+
+     xdc.registerDataFrameAsTable(df, tmpTable.mkString("."))
+
+     assert(xdc.catalog.tableExists(tmpTable))
+     xdc.catalog.unregisterTable(tmpTable)
+     xdc.catalog.close()
+
+     xdc.sparkContext.stop
    }
 
-  test("Default catalog: Specific file") {
-
+  "A Default catalog" should "be able to specificy a file for the persistence" in  {
     val dc: DefaultCatalog = new DefaultCatalog(
       args = util.Arrays.asList("/tmp/crossdata/catalog"))
     val tmpTable: Seq[String] = Seq(UUID.randomUUID.toString)
@@ -44,7 +59,6 @@ class DefaultCatalogSuite extends FunSuite {
     assert(dc.tableExists(tmpTable))
     dc.unregisterTable(tmpTable)
     dc.close()
-
   }
 
 }

@@ -21,7 +21,11 @@ import java.util
 
 import com.typesafe.config.{Config, ConfigFactory}
 import org.apache.spark.sql.catalyst.{CatalystConf, SimpleCatalystConf}
-import org.apache.spark.sql.{CrossdataFrame, DataFrame, SQLContext}
+import org.apache.spark.sql.sources.{LogicalRelation, RelationProvider, CreatableRelationProvider}
+import org.apache.spark.sql.types.StructField
+import org.apache.spark.sql.{SaveMode, DataFrame, SQLContext}
+import org.apache.spark.sql.cassandra._
+import org.apache.spark.util.Utils
 import org.apache.spark.{Logging, SparkContext}
 
 /**
@@ -43,20 +47,40 @@ class XDContext(sc: SparkContext) extends SQLContext(sc) with Logging {
   val xdCatalog = Class.forName(catalogClass)
 
   val constr: Constructor[_] = xdCatalog.getConstructor(
-    classOf[Option[XDContext]],
     classOf[CatalystConf],
     classOf[util.List[String]])
 
   override protected[sql] lazy val catalog: XDCatalog =
     constr.newInstance(
-      Some(this),
       new SimpleCatalystConf(caseSensitive),
       catalogArgs).asInstanceOf[XDCatalog]
 
   catalog.open()
 
   override def sql(sqlText: String): DataFrame = {
-    CrossdataFrame(this, parseSql(sqlText))
+    XDDataframe(this, parseSql(sqlText))
   }
+
+  def persistTable(tableName: String, clusterName: String, cols: Seq[StructField]) = {
+
+    val loader = Utils.getContextOrSparkClassLoader
+    clusterName match {
+      case "Cassandra"=> {
+        val provider = "com.stratio.crossdata.sql.sources.cassandra"
+        val identifier:Seq[String]=List(clusterName, tableName)
+        val clazz=loader.loadClass(provider + ".DefaultSource")
+
+        val relation = clazz.newInstance() match {
+          case dataSource: RelationProvider =>
+            val params:Map[String, String]=Map()
+            dataSource.createRelation(this, params)
+          case _ => sys.error(s"${clazz.getCanonicalName} does not allow create table.")
+        }
+        catalog.registerTable(identifier,LogicalRelation(relation))
+      }
+      case _ =>
+    }
+  }
+
 }
 

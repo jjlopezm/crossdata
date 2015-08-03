@@ -24,7 +24,7 @@
     <parent>
         <groupId>com.stratio</groupId>
         <artifactId>parent</artifactId>
-        <version>0.1.0</version>
+        <version>0.4.0</version>
     </parent>
 
     <groupId>com.stratio.crossdata</groupId>
@@ -80,15 +80,12 @@
 
     <modules>
         <module>crossdata-ng</module>
-        <module>crossdata-hive</module>
-        <module>crossdata-cassandra</module>
-        <module>crossdata-examples</module>
         <module>doc</module>
     </modules>
 
     <properties>
-        <scala.group>2.10</scala.group>
-        <scala.version>${scala.group}.4</scala.version>
+        <scala.binary.version>2.10</scala.binary.version>
+        <scala.version>${scala.binary.version}.4</scala.version>
         <scalatest.version>2.2.2</scalatest.version>
         <spark.version>1.4.1</spark.version>
         <scalatest.version>2.2.5</scalatest.version>
@@ -109,11 +106,20 @@
             </dependency>
             <dependency>
                 <groupId>org.apache.spark</groupId>
-                <artifactId>spark-sql_${scala.group}</artifactId>
+                <artifactId>spark-sql_${scala.binary.version}</artifactId>
                 <version>${spark.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
+    <dependencies>
+
+    <dependency>
+        <groupId>junit</groupId>
+        <artifactId>junit</artifactId>
+        <version>4.12</version>
+        <scope>test</scope>
+    </dependency>
+    </dependencies>
 
     <build>
         <sourceDirectory>src/main/scala</sourceDirectory>
@@ -136,6 +142,91 @@
 
         <plugins>
             <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.3</version>
+                <configuration>
+                    <skip>true</skip>
+                    <source>1.7</source>
+                    <target>1.7</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>net.alchim31.maven</groupId>
+                <artifactId>scala-maven-plugin</artifactId>
+                <version>3.2.0</version>
+                <configuration>
+                    <checkMultipleScalaVersions>false</checkMultipleScalaVersions>
+                    <args>
+                        <arg>-Xmax-classfile-name</arg>
+                        <arg>130</arg>
+                    </args>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>compile</id>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                        <phase>compile</phase>
+                    </execution>
+                    <execution>
+                        <id>test-compile</id>
+                        <goals>
+                            <goal>testCompile</goal>
+                        </goals>
+                        <phase>test-compile</phase>
+                    </execution>
+                    <execution>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <includes>
+                        <include>**/*Spec.*</include>
+                    </includes>
+                    <argLine>
+                        ${jacoco-UT-argline}
+                        -XX:MaxPermSize=256m
+                     </argLine>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>integration-test</id>
+                        <goals>
+                            <goal>integration-test</goal>
+                        </goals>
+                        <configuration>
+                            <useSystemClassLoader>false</useSystemClassLoader>
+                            <useManifestOnlyJar>true</useManifestOnlyJar>
+                            <includes>
+                                <include>**/*IT.*</include>
+                            </includes>
+                            <argLine>
+                                ${jacoco-IT-argline}
+                                -Xmx1024m
+                                -XX:MaxPermSize=256m
+                            </argLine>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+           <!--  <plugin>
                 <groupId>org.scala-tools</groupId>
                 <artifactId>maven-scala-plugin</artifactId>
                 <executions>
@@ -172,14 +263,14 @@
                         </goals>
                     </execution>
                 </executions>
-            </plugin>
+            </plugin>-->
             <plugin>
                 <groupId>org.scalastyle</groupId>
                 <artifactId>scalastyle-maven-plugin</artifactId>
                 <version>0.7.0</version>
                 <configuration>
                     <verbose>true</verbose>
-                    <failOnViolation>true</failOnViolation>
+                    <failOnViolation>false</failOnViolation>
                     <includeTestSourceDirectory>false</includeTestSourceDirectory>
                     <failOnWarning>false</failOnWarning>
                     <sourceDirectory>${basedir}/src/main/scala</sourceDirectory>
@@ -199,6 +290,54 @@
             </plugin>
         </plugins>
     </build>
-
+    <profiles>
+        <profile>
+            <id>scala-2.10</id>
+            <activation>
+                <property>
+                    <name>!scala-2.11</name>
+                </property>
+            </activation>
+            <properties>
+                <scala.binary.version>2.10</scala.binary.version>
+                <scala.version>${scala.binary.version}.4</scala.version>
+            </properties>
+        </profile>
+        <profile>
+            <id>scala-2.11</id>
+            <activation>
+                <property>
+                    <name>scala-2.11</name>
+                </property>
+            </activation>
+            <properties>
+                <scala.binary.version>2.11</scala.binary.version>
+                <scala.version>${scala.binary.version}.7</scala.version>
+            </properties>
+        </profile>
+        <profile>
+            <id>crossdata-hive</id>
+            <activation>
+                <property>
+                    <name>crossdata-hive</name>
+                </property>
+            </activation>
+            <modules>
+                <module>crossdata-hive</module>
+            </modules>
+        </profile>
+        <profile>
+            <id>crossdata-cassandra</id>
+            <activation>
+                <property>
+                    <name>crossdata-cassandra</name>
+                </property>
+            </activation>
+            <modules>
+                <module>crossdata-cassandra</module>
+                <module>crossdata-examples</module>
+            </modules>
+         </profile>
+    </profiles>
 </project>
 

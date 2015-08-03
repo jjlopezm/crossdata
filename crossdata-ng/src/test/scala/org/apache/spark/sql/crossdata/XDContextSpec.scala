@@ -19,21 +19,24 @@ package org.apache.spark.sql.crossdata
 import org.apache.spark.sql.Row
 import org.apache.spark.sql.catalyst.analysis.Catalog
 import org.apache.spark.{SparkConf, SparkContext}
-import org.scalatest.FunSuite
+import org.junit.runner.RunWith
+import org.scalatest.FlatSpec
+import org.scalatest.junit.JUnitRunner
 
-class XDContextSuite extends FunSuite {
+@RunWith(classOf[JUnitRunner])
+class XDContextSpec extends FlatSpec {
 
-  test("XDContext: Pluggable catalog is instantiated") {
+  "A DefaultCatalog" should "be case sensitive" in {
 
     val sparkConf = new SparkConf().setAppName("Crossdata").setMaster("local[2]")
     val sc: SparkContext = new SparkContext(sparkConf)
     val ctx: XDContext = new XDContext(sc)
     val xdCatalog: Catalog = ctx.catalog
     assert(xdCatalog.conf.caseSensitiveAnalysis === true)
-    sc.stop
+    ctx.sparkContext.stop
   }
 
-  test("XDContext: Performs a basic operation") {
+  "A XDContext" should "perform a collect with a collection" in {
     val sparkConf = new SparkConf().setAppName("Crossdata").setMaster("local[2]")
     val sc: SparkContext = new SparkContext(sparkConf)
     val xdc: XDContext = new XDContext(sc)
@@ -49,7 +52,7 @@ class XDContextSuite extends FunSuite {
     val result: Array[Row] = xdc.sql("SELECT * FROM records").collect
     assert(result.length === 5)
 
-    sc.stop
+    xdc.sparkContext.stop
   }
 
 }

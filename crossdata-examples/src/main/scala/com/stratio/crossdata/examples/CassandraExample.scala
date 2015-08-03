@@ -19,6 +19,7 @@ package com.stratio.crossdata.examples
 import org.apache.spark.sql.crossdata.XDContext
 import org.apache.spark.{SparkContext, SparkConf}
 
+
 trait DefaultConstants {
 /*
   val Cluster = "Test Cluster"
@@ -35,7 +36,7 @@ trait DefaultConstants {
   // Cassandra provider => org.apache.spark.sql.cassandra
 }
 
-object CassandraDriver extends App with DefaultConstants {
+object CassandraExample extends App with DefaultConstants {
 
   withCrossdataContext { xdContext =>
 
