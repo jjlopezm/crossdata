@@ -39,7 +39,6 @@ object MySQLCatalog {
   val USER="crossdata.catalog.mysql.db.user"
   val PASS="crossdata.catalog.mysql.db.pass"
 
-  val StringSeparator: String = "."
   val CROSSDATA_VERSION = "crossdata.version"
 
   case class CrossdataTable(tableName: String, database: Option[String] = None,  userSpecifiedSchema: Option[StructType], provider: String, crossdataVersion: String, opts: Map[String, String] = Map.empty[String, String])
@@ -116,7 +115,7 @@ class MySQLCatalog(override val conf: CatalystConf = new SimpleCatalystConf(true
   override def dropAllTables(): Unit = {
     logInfo("XDCatalog: Drop all tables from catalog")
     val statement = connection.createStatement
-    statement.executeUpdate(s"""DROP TABLE $db.$table""")
+    statement.executeUpdate(s"""DELETE FROM $db.$table""")
     super.unregisterAllTables()
   }
 

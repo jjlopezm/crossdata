@@ -30,7 +30,7 @@ import scala.collection.mutable
 abstract class XDCatalog(val conf: CatalystConf = new SimpleCatalystConf(true)) extends Catalog with Serializable {
 
   // TODO see Spark 1.5 and JIRA associated
-
+hec
   val tables = new mutable.HashMap[String, LogicalPlan]()
 
   override def tableExists(tableIdentifier: Seq[String]): Boolean = {
