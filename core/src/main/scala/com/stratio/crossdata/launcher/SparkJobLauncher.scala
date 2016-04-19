@@ -22,7 +22,6 @@ import com.google.common.io.BaseEncoding
 import com.stratio.crossdata.utils.HdfsUtils
 import com.typesafe.config.{Config, ConfigRenderOptions}
 import org.apache.spark.launcher.SparkLauncher
-import org.apache.spark.sql.crossdata.XDContext
 import org.apache.spark.sql.crossdata.catalog.XDStreamingCatalog
 import org.apache.spark.sql.crossdata.config.StreamingConstants._
 import org.apache.spark.sql.crossdata.config.{CoreConfig, StreamingConstants}
@@ -34,7 +33,7 @@ import scala.util.{Properties, Try}
 
 object SparkJobLauncher extends SparkLoggerComponent with CrossdataSerializer {
 
-  def getSparkStreamingJob(crossdataConfig: Config, streamingCatalog: XDStreamingCatalog, ephemeralTableName: String, xdContext:XDContext)
+  def getSparkStreamingJob(crossdataConfig: Config, streamingCatalog: XDStreamingCatalog, ephemeralTableName: String)
                           (implicit executionContext: ExecutionContext): Try[SparkJob] = Try {
     val streamingConfig = crossdataConfig.getConfig(StreamingConfPath)
     val sparkHome =
