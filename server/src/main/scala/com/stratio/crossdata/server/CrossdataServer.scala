@@ -21,6 +21,7 @@ import akka.actor.{ActorSystem, Props}
 import akka.cluster.Cluster
 import akka.contrib.pattern.ClusterReceptionistExtension
 import akka.http.scaladsl.Http
+import akka.http.scaladsl.Http.ServerBinding
 import akka.routing.{DefaultResizer, RoundRobinPool}
 import akka.stream.ActorMaterializer
 import com.stratio.crossdata.server.actors.ServerActor
@@ -41,6 +42,7 @@ class CrossdataServer extends Daemon with ServerConfig {
 
   var system: Option[ActorSystem] = None
   var xdContext: Option[XDContext] = None
+  var bindingFuture: Option[Future[ServerBinding]] = None
 
   override def init(p1: DaemonContext): Unit = ()
 
@@ -82,17 +84,15 @@ class CrossdataServer extends Daemon with ServerConfig {
         actorName)
       ClusterReceptionistExtension(actorSystem).registerService(serverActor)
 
-
-      implicit val httpSystem = system.getOrElse(ActorSystem(clusterName, config))
+      implicit val httpSystem = actorSystem
       implicit val materializer = ActorMaterializer()
-      val httpServerActor=new CrossdataHttpServer(config,serverActor, httpSystem)
-      val host=config.getString(ServerConfig.Host)
-
-      implicit val exC = httpServerActor.system.dispatcher
-      Future(Http().bindAndHandle(httpServerActor.route, host, 13422))
-      logger.info(s"Crossdata Server started --- v${crossdata.CrossdataVersion}")
+      val httpServerActor = new CrossdataHttpServer(config, serverActor, actorSystem)
+      val host = config.getString(ServerConfig.Host)
+      // TODO RestPort should be configurable
+      bindingFuture = Option(Http().bindAndHandle(httpServerActor.route, host, 13422))
     }
 
+    logger.info(s"Crossdata Server started --- v${crossdata.CrossdataVersion}")
 
   }
 
@@ -108,7 +108,14 @@ class CrossdataServer extends Daemon with ServerConfig {
 
   override def stop(): Unit = {
     xdContext.foreach(_.sc.stop())
-    system.foreach(_.shutdown())
+
+    system.foreach { actSystem =>
+      implicit val exContext = actSystem.dispatcher
+      bindingFuture.foreach { bFuture =>
+        bFuture.flatMap(_.unbind()).onComplete(_ => actSystem.shutdown())
+      }
+    }
+
     logger.info("Crossdata Server stopped")
   }
 

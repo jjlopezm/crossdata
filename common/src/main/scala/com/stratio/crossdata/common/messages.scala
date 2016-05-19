@@ -82,4 +82,5 @@ private[crossdata] case class QueryCancelledReply(requestId: UUID) extends Serve
 
 private[crossdata] case class SQLReply(requestId: UUID, sqlResult: SQLResult) extends ServerReply
 
-private[crossdata] case class HdfsMessage(requestId: UUID, hdfsRoute:String) extends ServerReply
+private[crossdata] case class AddHdfsFileReply(requestId: UUID, hdfsRoute:String) extends ServerReply
+
