@@ -60,10 +60,20 @@ case class RowSerializer(providedSchema: StructType) extends Serializer[Row] {
       case (ArrayType(ty, _), JArray(arr)) =>
         mutable.WrappedArray make arr.map(extractField(ty, _)).toArray
       /* Maps will be serialized as sub-objects so keys are constrained to be strings */
-      case (MapType(StringType, vt, _), JObject(fields)) =>
+//      case (MapType(StringType, vt, _), JObject(fields)) =>
+//        val (keys, values) = fields.unzip
+//        val unserValues = values map (jval => extractField(vt, jval))
+//        ArrayBasedMapDataNotDeprecated(keys.toArray, unserValues.toArray)
+
+
+      case (MapType(kt, vt, _), JObject(fields)) =>
         val (keys, values) = fields.unzip
-        val unserValues = values map (jval => extractField(vt, jval))
+        val unserValues = values map (
+          jval => extractField(vt, jval)
+          )
         ArrayBasedMapDataNotDeprecated(keys.toArray, unserValues.toArray)
+
+
       case (st: StructType, JObject(JField("values",JArray(values))::_)) =>
         deserializeWithSchema(st, values, true)
     }
@@ -106,15 +116,30 @@ case class RowSerializer(providedSchema: StructType) extends Serializer[Row] {
           case v: ArrayDataNotDeprecated => JArray(v.array.toList.map(v => Extraction.decompose(v)))
           case v: mutable.WrappedArray[_] => JArray(v.toList.map(v => Extraction.decompose(v)))
         }
-      case (MapType(StringType, vt, _), v: MapDataNotDeprecated) =>
+
+
+//      case (MapType(StringType, vt, _), v: MapDataNotDeprecated) =>
+//        /* Maps will be serialized as sub-objects so keys are constrained to be strings */
+//        val serKeys = v.keyArray().array.map(v => v.toString)
+//        val serValues = v.valueArray.array.map(v => serializeField(vt -> v))
+//        JObject(
+//          (v.keyArray.array zip serValues) map {
+//            case (k: String, v) => JField(k, v)
+//          } toList
+//        )
+
+      case (MapType(keyType, valueType, _), v: MapDataNotDeprecated) =>
         /* Maps will be serialized as sub-objects so keys are constrained to be strings */
         val serKeys = v.keyArray().array.map(v => v.toString)
-        val serValues = v.valueArray.array.map(v => serializeField(vt -> v))
+        val serValues = v.valueArray.array.map(v => serializeField(valueType -> v))
+        val serKeyType= keyType.typeName
         JObject(
           (v.keyArray.array zip serValues) map {
-            case (k: String, v) => JField(k, v)
+            case (k: String, v) => JField(serKeyType, JField(k,v))
           } toList
         )
+
+
       case (st: StructType, v: Row) => serializeWithSchema(st, v, true)
     }
 

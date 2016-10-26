@@ -47,6 +47,7 @@ class RowSerializerSpec extends XDSerializationTest[Row] with CrossdataCommonSer
     StructField("arraystring",ArrayType(StringType,true),true),
     StructField("mapstringint",MapType(StringType,IntegerType,true),true),
     StructField("mapstringstring",MapType(StringType,StringType,true),true),
+    StructField("maptimestampstring",MapType(TimestampType,StringType,true),true),
     StructField("struct",StructType(StructField("field1",IntegerType,true)::StructField("field2",IntegerType,true) ::Nil), true),
     StructField("arraystruct",ArrayType(StructType(StructField("field1",IntegerType,true)::StructField("field2", IntegerType,true)::Nil),true),true),
     StructField("structofstruct",StructType(StructField("field1",TimestampType,true)::StructField("field2", IntegerType, true)::StructField("struct1",StructType(StructField("structField1",StringType,true)::StructField("structField2",IntegerType,true)::Nil),true)::Nil),true)
@@ -72,6 +73,7 @@ class RowSerializerSpec extends XDSerializationTest[Row] with CrossdataCommonSer
     new GenericArrayData(Array("hello", "world")),
     ArrayBasedMapData(Map("b" -> 2)),
     ArrayBasedMapData(Map("a" -> "A", "b" -> "B")),
+    ArrayBasedMapData(Map(java.sql.Date.valueOf("2015-11-30") -> "A")),
     new GenericRowWithSchema(Array(99,98), StructType(StructField("field1", IntegerType)::StructField("field2", IntegerType)::Nil)),
     new GenericArrayData(
       Array(
